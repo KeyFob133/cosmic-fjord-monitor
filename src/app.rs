@@ -36,6 +36,8 @@ pub enum Message {
     Sample(Instant),
     /// Settings changed on disk.
     ConfigChanged(Config),
+    /// The compositor destroyed our surface, so it needs building again.
+    SurfaceLost,
 }
 
 pub struct FjordMonitor {
@@ -47,6 +49,10 @@ pub struct FjordMonitor {
     surface: window::Id,
     started: Instant,
     elapsed: f32,
+    /// When the surface was last created, used to rate-limit rebuilds.
+    surface_created: Instant,
+    /// Set when the compositor destroys the surface, cleared once rebuilt.
+    surface_lost: bool,
     /// Cached static scenery. Cleared when the surface geometry changes.
     terrain: Cache,
 }
@@ -86,6 +92,8 @@ impl Application for FjordMonitor {
             surface,
             started: Instant::now(),
             elapsed: 0.0,
+            surface_created: Instant::now(),
+            surface_lost: false,
             terrain: Cache::new(),
         };
 
@@ -96,9 +104,27 @@ impl Application for FjordMonitor {
         match message {
             Message::Frame(now) => {
                 self.elapsed = now.duration_since(self.started).as_secs_f32();
+
+                // Rebuild a lost surface here rather than at the moment it is
+                // lost. Doing it on a tick means a request arriving inside the
+                // rate-limit window is deferred instead of discarded, which is
+                // what a surface destroyed just after startup depends on.
+                if self.surface_lost && self.surface_created.elapsed().as_secs_f32() >= 2.0 {
+                    self.surface_lost = false;
+                    self.surface = window::Id::unique();
+                    self.surface_created = Instant::now();
+                    self.terrain.clear();
+                    return create_surface(self.surface, &self.config);
+                }
             }
             Message::Sample(_) => {
                 self.sample = self.monitor.sample();
+            }
+            Message::SurfaceLost => {
+                // Only record it. The rebuild happens on the next tick, no sooner
+                // than two seconds after the last one, so that a failing creation
+                // cannot spin the event loop destroying and recreating.
+                self.surface_lost = true;
             }
             Message::ConfigChanged(config) => {
                 let geometry_changed = config.width != self.config.width
@@ -113,6 +139,7 @@ impl Application for FjordMonitor {
                     // A layer surface cannot be resized in place, so replace it.
                     let old = self.surface;
                     self.surface = window::Id::unique();
+                    self.surface_created = Instant::now();
                     return Task::batch([
                         destroy_layer_surface(old),
                         create_surface(self.surface, &self.config),
@@ -139,6 +166,12 @@ impl Application for FjordMonitor {
         .width(Length::Fill)
         .height(Length::Fill)
         .into()
+    }
+
+    /// Called when the compositor asks a surface to close. For a layer surface
+    /// that means the output it was anchored to is gone.
+    fn on_close_requested(&self, id: window::Id) -> Option<Self::Message> {
+        (id == self.surface).then_some(Message::SurfaceLost)
     }
 
     fn subscription(&self) -> Subscription<Self::Message> {

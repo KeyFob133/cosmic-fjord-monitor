@@ -1,5 +1,5 @@
 name := 'cosmic-fjord-monitor'
-appid := 'com.system76.CosmicFjordMonitor'
+appid := 'io.github.KeyFob133.CosmicFjordMonitor'
 
 rootdir := ''
 prefix := '/usr'

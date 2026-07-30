@@ -26,7 +26,7 @@ use crate::config::{Config, Corner};
 use crate::scene::Scene;
 use crate::stats::{Monitor, Sample};
 
-pub const APP_ID: &str = "com.system76.CosmicFjordMonitor";
+pub const APP_ID: &str = "io.github.KeyFob133.CosmicFjordMonitor";
 
 #[derive(Clone, Debug)]
 pub enum Message {

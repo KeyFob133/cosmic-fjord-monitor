@@ -43,7 +43,7 @@ cargo run --release
 
 ## Configuration
 
-Settings live in `~/.config/cosmic/com.system76.CosmicFjordMonitor/v1/`, one file
+Settings live in `~/.config/cosmic/io.github.KeyFob133.CosmicFjordMonitor/v1/`, one file
 per field, managed by `cosmic-config`. Edits are picked up live: the widget watches
 the directory and rebuilds the surface if the geometry changed.
 
@@ -61,7 +61,7 @@ the directory and rebuilds the surface if the geometry changed.
 Example:
 
 ```sh
-cd ~/.config/cosmic/com.system76.CosmicFjordMonitor/v1
+cd ~/.config/cosmic/io.github.KeyFob133.CosmicFjordMonitor/v1
 echo 'false' > scene          # gauges only
 echo '"BottomLeft"' > corner
 echo '15' > fps

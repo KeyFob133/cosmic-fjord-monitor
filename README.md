@@ -1,5 +1,7 @@
 # cosmic-fjord-monitor
 
+![Widget na pulpicie COSMIC](screenshots/fjord.png)
+
 A floating system monitor for the COSMIC desktop. CPU, memory and GPU are reported
 three ways at once: as ring gauges, and as a Norwegian fjord where the halibut swim
 harder under load, the aurora brightens with the GPU, and penguins in Pop!_OS
@@ -105,6 +107,12 @@ have built against before relying on it. If a build breaks, the likely spots are
 - `cosmic::font::mono()` and `semibold()`, both routed through `src/draw.rs` so
   there is one place to fix,
 - the `canvas::Program` signature in `src/scene.rs`.
+
+## Credits
+
+The idea came from a Python system-monitor widget posted to r/pop_os. This is an
+independent implementation in Rust on libcosmic, with a different scene and a
+different set of mappings.
 
 ## Licence
 

@@ -27,6 +27,9 @@ use sysinfo::{CpuRefreshKind, MemoryRefreshKind, RefreshKind, System};
 pub struct Sample {
     pub cpu_load: f32,
     pub cpu_temp_c: Option<f32>,
+    /// Logical threads currently working, and how many exist in total.
+    pub busy_threads: u16,
+    pub total_threads: u16,
     pub mem_used_gib: f32,
     pub mem_total_gib: f32,
     pub gpu_load: Option<f32>,
@@ -98,11 +101,25 @@ impl Monitor {
 
         const GIB: f32 = 1024.0 * 1024.0 * 1024.0;
 
+        // A thread above this fraction of its own capacity counts as working.
+        // Half is a deliberate midpoint: below it a thread is doing less than it
+        // is idling, and scheduler noise on a quiet machine rarely sustains it.
+        const BUSY: f32 = 0.5;
+
+        let cpus = self.system.cpus();
+        let total_threads = cpus.len() as u16;
+        let busy_threads = cpus
+            .iter()
+            .filter(|cpu| cpu.cpu_usage() / 100.0 >= BUSY)
+            .count() as u16;
+
         let (gpu_load, gpu_temp_c) = self.read_gpu();
 
         Sample {
             cpu_load: (self.system.global_cpu_usage() / 100.0).clamp(0.0, 1.0),
             cpu_temp_c: self.cpu_temp.as_deref().and_then(read_millidegrees),
+            busy_threads,
+            total_threads,
             mem_used_gib: self.system.used_memory() as f32 / GIB,
             mem_total_gib: self.system.total_memory() as f32 / GIB,
             gpu_load,

@@ -14,7 +14,8 @@ paths only, so it scales to any surface size and ships no image assets.
 
 | Metric | Gauge | In the scene |
 | --- | --- | --- |
-| CPU load | teal ring | number of halibut on the seabed, and their tail-beat rate |
+| Busy threads | — | number of halibut on the seabed |
+| CPU load | teal ring | how hard the halibut beat their tails |
 | Memory | orange ring | swell on the water surface, which the floes ride |
 | GPU load | mint ring | — |
 | CPU temperature | sub-line under each number | aurora brightness and hue |

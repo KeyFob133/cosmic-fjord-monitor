@@ -8,7 +8,8 @@
 //!
 //! Load is mapped onto the scene rather than merely reported by it:
 //!
-//! - CPU drives how many halibut are out and how hard they beat their tails.
+//! - Busy thread count decides how many halibut are out.
+//! - Average CPU load decides how hard they beat their tails.
 //! - Memory drives the swell on the water surface.
 //! - CPU temperature drives the aurora, which brightens and reddens with it.
 //!
@@ -29,6 +30,10 @@ use crate::stats::Sample;
 /// Upper bound on fish. The whole population is always simulated; load decides
 /// how many of them are faded in, which keeps entrances and exits smooth.
 const MAX_HALIBUT: usize = 6;
+
+/// Busy threads per fish. Calibrated so a saturated 16-to-24-thread machine fills
+/// the water without the fish overlapping into mush.
+const THREADS_PER_HALIBUT: f32 = 3.5;
 
 pub struct Scene<'a> {
     pub sample: Sample,
@@ -402,7 +407,16 @@ impl Scene<'_> {
         let swell = 1.0 + self.sample.mem_load() * 2.2;
 
         // Halibut, farthest first so nearer fish overlap correctly.
-        let wanted = 1.0 + cpu * (MAX_HALIBUT as f32 - 1.0);
+        //
+        // Population follows the number of busy threads, not the average across
+        // all of them. On twenty threads one saturated core is five per cent of
+        // the average, which would show an empty fjord while a build pins a core;
+        // counted this way that is one fish, and `make -j20` fills the water.
+        //
+        // Energy still comes from the average, which is the smoother of the two
+        // signals and the better fit for a rate. The constant offset keeps one
+        // fish in view at idle, because an empty scene reads as broken.
+        let wanted = 0.6 + self.sample.busy_threads as f32 / THREADS_PER_HALIBUT;
         for i in 0..MAX_HALIBUT {
             let mut rng = Rng::new(0x1000 + i as u64 * 7919);
             let lane = rng.range(0.70, 0.90);

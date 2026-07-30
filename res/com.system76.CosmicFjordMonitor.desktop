@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Fjord Monitor
+Comment=Floating system monitor with halibut
+Exec=cosmic-fjord-monitor
+Terminal=false
+Type=Application
+Categories=System;Monitor;
+NoDisplay=false
+X-GNOME-Autostart-enabled=true

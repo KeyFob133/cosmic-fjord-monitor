@@ -1,0 +1,31 @@
+[package]
+name = "cosmic-fjord-monitor"
+version = "0.1.0"
+edition = "2021"
+license = "MPL-2.0"
+description = "Floating Norwegian-fjord system monitor for the COSMIC desktop"
+
+[dependencies]
+sysinfo = "0.33"
+serde = { version = "1", features = ["derive"] }
+
+# libcosmic has no crates.io release, so it is consumed from git and pinned to an
+# exact commit. Its layer-shell and canvas APIs move with upstream iced, so
+# tracking the tip of master breaks this build without warning. The rev below is
+# the one it is known to compile against.
+[dependencies.libcosmic]
+git = "https://github.com/pop-os/libcosmic"
+rev = "dc1cf9f00cbe2902a52166492654bb9fee8a73d1"
+default-features = false
+features = [
+    "tokio",        # async executor
+    "winit",        # windowing backend
+    "wayland",      # wlr-layer-shell support: required for a floating surface
+    "wgpu",         # GPU renderer, needed for canvas geometry
+    "multi-window", # we run with no main window, only a layer surface
+]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
